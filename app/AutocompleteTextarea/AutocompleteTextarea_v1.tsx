@@ -1,26 +1,19 @@
 import React, { useState, useRef, useEffect } from "react";
-import "./AutocompleteTextarea.css";
+import "./AutocompleteTextarea_v1.css";
 
-const AutocompleteTextarea = () => {
+const AutocompleteTextarea_v1 = () => {
   const [value, setValue] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [selectedSuggestion, setSelectedSuggestion] = useState("");
-  const [selectedIndex, setSelectedIndex] = useState(0);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [cursorPosition, setCursorPosition] = useState(0);
-  const [suggestionPosition, setSuggestionPosition] = useState({
-    top: 0,
-    left: 0,
-  });
   const textareaRef = useRef(null);
-  const suggestionsListRef = useRef(null);
-  const suggestionItemsRef = useRef([]);
 
   // 示例建议列表
   const suggestionsList = {
-    "#": ["标题", "重要", "任务", "提醒", "a", "b", "c"],
-    "@": ["用户1", "用户2", "用户3", "团队", "a", "b", "c"],
-    "/": ["日期", "时间", "文件", "图片", "a", "b", "c"],
+    "#": ["标题", "重要", "任务", "提醒"],
+    "@": ["用户1", "用户2", "用户3", "团队"],
+    "/": ["日期", "时间", "文件", "图片"],
   };
 
   // 处理输入变化
@@ -67,10 +60,7 @@ const AutocompleteTextarea = () => {
       if (filteredSuggestions.length > 0) {
         setSuggestions(filteredSuggestions);
         setSelectedSuggestion(filteredSuggestions[0]);
-        setSelectedIndex(0);
         setShowSuggestions(true);
-        // 重置引用数组
-        suggestionItemsRef.current = [];
         return;
       }
     }
@@ -102,28 +92,10 @@ const AutocompleteTextarea = () => {
 
   // 在建议列表中导航
   const navigateSuggestion = (direction) => {
-    const newIndex =
-      (selectedIndex + direction + suggestions.length) % suggestions.length;
-    setSelectedIndex(newIndex);
-    setSelectedSuggestion(suggestions[newIndex]);
-
-    // 确保选中项可见（滚动到视图中）
-    if (suggestionsListRef.current && suggestionItemsRef.current[newIndex]) {
-      const container = suggestionsListRef.current;
-      const item = suggestionItemsRef.current[newIndex];
-
-      const containerRect = container.getBoundingClientRect();
-      const itemRect = item.getBoundingClientRect();
-
-      // 如果选中项在容器底部之下
-      if (itemRect.bottom > containerRect.bottom) {
-        container.scrollTop += itemRect.bottom - containerRect.bottom;
-      }
-      // 如果选中项在容器顶部之上
-      else if (itemRect.top < containerRect.top) {
-        container.scrollTop -= containerRect.top - itemRect.top;
-      }
-    }
+    const currentIndex = suggestions.indexOf(selectedSuggestion);
+    const nextIndex =
+      (currentIndex + direction + suggestions.length) % suggestions.length;
+    setSelectedSuggestion(suggestions[nextIndex]);
   };
 
   // 完成建议输入
@@ -199,78 +171,6 @@ const AutocompleteTextarea = () => {
     return "";
   };
 
-  // 更新计算光标位置的函数
-  const updateCursorCoordinates = () => {
-    if (!textareaRef.current || !showSuggestions) return;
-
-    const textarea = textareaRef.current;
-    const textBeforeCursor = value.slice(0, cursorPosition);
-
-    // 创建一个临时元素来计算文本宽度
-    const mirror = document.createElement("div");
-    mirror.style.position = "absolute";
-    mirror.style.top = "0";
-    mirror.style.left = "0";
-    mirror.style.visibility = "hidden";
-    mirror.style.whiteSpace = "pre-wrap";
-    mirror.style.wordWrap = "break-word";
-    mirror.style.width = `${textarea.clientWidth}px`;
-    mirror.style.padding = window.getComputedStyle(textarea).padding;
-    mirror.style.font = window.getComputedStyle(textarea).font;
-    mirror.style.lineHeight = window.getComputedStyle(textarea).lineHeight;
-
-    // 将文本分割成行
-    const lines = textBeforeCursor.split("\n");
-
-    // 计算光标所在行之前的所有行的高度
-    for (let i = 0; i < lines.length - 1; i++) {
-      const lineDiv = document.createElement("div");
-      lineDiv.textContent = lines[i] || " ";
-      mirror.appendChild(lineDiv);
-    }
-
-    // 添加光标所在行
-    const lastLineDiv = document.createElement("span");
-    lastLineDiv.textContent = lines[lines.length - 1] || " ";
-    mirror.appendChild(lastLineDiv);
-
-    document.body.appendChild(mirror);
-
-    // 计算位置
-    const lastLine = mirror.lastChild;
-    const cursorLeft = lastLine.offsetWidth;
-    const cursorTop = mirror.offsetHeight;
-
-    document.body.removeChild(mirror);
-
-    // 计算建议列表的位置
-    const textareaRect = textarea.getBoundingClientRect();
-    const paddingTop = parseInt(window.getComputedStyle(textarea).paddingTop);
-    const paddingLeft = parseInt(window.getComputedStyle(textarea).paddingLeft);
-
-    // 设置建议列表位置，确保不会超出textarea边界
-    const offsetHeight = 40;
-    setSuggestionPosition({
-      top:
-        offsetHeight +
-        Math.min(cursorTop + paddingTop, textarea.clientHeight - 150), // 150是建议列表的估计高度
-      left: Math.min(cursorLeft + paddingLeft, textarea.clientWidth - 200), // 200是建议列表的估计宽度
-    });
-  };
-
-  // 在光标位置或显示状态改变时更新位置
-  useEffect(() => {
-    updateCursorCoordinates();
-  }, [cursorPosition, showSuggestions, value]);
-
-  // 当窗口大小改变时更新位置
-  useEffect(() => {
-    window.addEventListener("resize", updateCursorCoordinates);
-    return () => {
-      window.removeEventListener("resize", updateCursorCoordinates);
-    };
-  }, []);
-
   return (
     <div className="autocomplete-container">
       <div className="textarea-wrapper">
@@ -289,34 +189,25 @@ const AutocompleteTextarea = () => {
             {value.slice(cursorPosition)}
           </div>
         )}
-
-        {/* 将建议列表放在textarea内部 */}
-        {showSuggestions && (
-          <div
-            ref={suggestionsListRef}
-            className="suggestions-list inside-textarea"
-            style={{
-              top: `${suggestionPosition.top}px`,
-              left: `${suggestionPosition.left}px`,
-            }}
-          >
-            {suggestions.map((suggestion, index) => (
-              <div
-                key={index}
-                ref={(el) => (suggestionItemsRef.current[index] = el)}
-                className={`suggestion-item ${
-                  index === selectedIndex ? "selected" : ""
-                }`}
-                onClick={() => handleSuggestionClick(suggestion)}
-              >
-                {suggestion}
-              </div>
-            ))}
-          </div>
-        )}
       </div>
+
+      {showSuggestions && (
+        <div className="suggestions-list">
+          {suggestions.map((suggestion, index) => (
+            <div
+              key={index}
+              className={`suggestion-item ${
+                suggestion === selectedSuggestion ? "selected" : ""
+              }`}
+              onClick={() => handleSuggestionClick(suggestion)}
+            >
+              {suggestion}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
 
-export default AutocompleteTextarea;
+export default AutocompleteTextarea_v1;

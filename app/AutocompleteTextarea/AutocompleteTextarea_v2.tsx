@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import "./AutocompleteTextarea.css";
+import "./AutocompleteTextarea_v2.css";
 
 const AutocompleteTextarea = () => {
   const [value, setValue] = useState("");
