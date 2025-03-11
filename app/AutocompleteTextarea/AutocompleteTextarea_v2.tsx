@@ -3,7 +3,7 @@ import "./AutocompleteTextarea_v2.css";
 
 const AutocompleteTextarea = () => {
   const [value, setValue] = useState("");
-  const [suggestions, setSuggestions] = useState([]);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
   const [selectedSuggestion, setSelectedSuggestion] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -36,7 +36,7 @@ const AutocompleteTextarea = () => {
   };
 
   // 检查触发字符
-  const checkForTriggerCharacter = (text, position) => {
+  const checkForTriggerCharacter = (text: string, position: number) => {
     // 获取光标前的文本
     const textBeforeCursor = text.slice(0, position);
 
@@ -101,7 +101,8 @@ const AutocompleteTextarea = () => {
   };
 
   // 在建议列表中导航
-  const navigateSuggestion = (direction) => {
+  const navigateSuggestion = (direction: number) => {
+    // direction: 1 || -1
     const newIndex =
       (selectedIndex + direction + suggestions.length) % suggestions.length;
     setSelectedIndex(newIndex);
@@ -169,7 +170,7 @@ const AutocompleteTextarea = () => {
   };
 
   // 选择建议
-  const handleSuggestionClick = (suggestion) => {
+  const handleSuggestionClick = (suggestion: string) => {
     setSelectedSuggestion(suggestion);
     completeSuggestion();
   };
